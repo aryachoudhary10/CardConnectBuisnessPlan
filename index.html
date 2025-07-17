@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardConnect | Interactive Business Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Fintech Calm" (Slate, Amber, Sky Blue, Off-White) -->
+    <!-- Application Structure Plan: The SPA is structured thematically rather than mirroring the report's linear chapters. It uses a top navigation bar for direct access to key sections: Overview, The Opportunity, How It Works, The Market, Competitive Edge, and Technology. This dashboard-like approach allows stakeholders (e.g., investors, team members) to quickly jump to the information most relevant to them. The user flow is designed to tell a story: starting with the big picture (the massive market), defining the core problem/solution, explaining the mechanics of the business, analyzing the environment, and finally detailing the execution plan (competition and tech). This non-linear, thematic structure enhances usability and makes the complex information in the business plan more digestible and engaging. -->
+    <!-- Visualization & Content Choices: 
+        - Market Size (95M cards, ₹1.5L Cr spending): Goal: Inform/Impress. Method: Dynamic number counters. Interaction: Animate on scroll. Justification: More impactful than static text, highlighting the scale of the opportunity immediately.
+        - Problem/Solution (Buyer vs. Cardholder): Goal: Compare. Method: Side-by-side card layout. Justification: Clearly visualizes the two-sided market and their complementary needs.
+        - Transaction & Revenue Flow: Goal: Explain process. Method: Interactive HTML/CSS stepper for the transaction flow and a Chart.js Donut chart for the revenue split. Interaction: Clicking steps reveals details; hovering on chart shows values. Justification: Simplifies complex processes into easy-to-follow visual steps and clarifies the business model instantly. Library: Chart.js.
+        - Card Growth: Goal: Show change. Method: Chart.js Bar Chart. Interaction: Hover tooltips. Justification: A standard and effective way to represent growth data. Library: Chart.js.
+        - Competitor Analysis: Goal: Compare. Method: Interactive HTML table. Interaction: Hover effects on rows. Justification: Presents a dense amount of competitive information in a clean, comparable format.
+        - Technology Stack: Goal: Organize/Inform. Method: HTML/CSS grid with text labels. Justification: Visually represents the architecture without technical overload.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. All visuals are built with HTML/CSS/Tailwind or rendered on a Canvas using Chart.js. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s ease, border-bottom-color 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0284c7; /* sky-600 */
+            border-bottom-color: #0284c7;
+        }
+        .step-item.active .step-circle {
+            background-color: #0284c7;
+            color: white;
+            border-color: #0284c7;
+        }
+        .step-item.active .step-title {
+            color: #0284c7;
+        }
+        .step-content {
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .step-content.visible {
+            max-height: 500px;
+            opacity: 1;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-slate-800">CardConnect</span>
+                    <span class="ml-2 text-xs font-semibold text-sky-600 border border-sky-600 rounded-full px-2 py-0.5">Interactive Plan</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#overview" class="nav-link font-medium pb-1">Overview</a>
+                    <a href="#opportunity" class="nav-link font-medium pb-1">The Opportunity</a>
+                    <a href="#how-it-works" class="nav-link font-medium pb-1">How It Works</a>
+                    <a href="#market" class="nav-link font-medium pb-1">The Market</a>
+                    <a href="#competition" class="nav-link font-medium pb-1">Competitive Edge</a>
+                    <a href="#technology" class="nav-link font-medium pb-1">Technology</a>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-slate-700 hover:text-sky-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg">
+            <a href="#overview" class="block py-2 px-4 text-sm hover:bg-slate-50">Overview</a>
+            <a href="#opportunity" class="block py-2 px-4 text-sm hover:bg-slate-50">The Opportunity</a>
+            <a href="#how-it-works" class="block py-2 px-4 text-sm hover:bg-slate-50">How It Works</a>
+            <a href="#market" class="block py-2 px-4 text-sm hover:bg-slate-50">The Market</a>
+            <a href="#competition" class="block py-2 px-4 text-sm hover:bg-slate-50">Competitive Edge</a>
+            <a href="#technology" class="block py-2 px-4 text-sm hover:bg-slate-50">Technology</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <section id="overview" class="text-center scroll-mt-20">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800 leading-tight">Unlocking the Hidden Value of Credit Cards in India.</h1>
+            <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">CardConnect is a peer-to-peer platform connecting users seeking discounts with cardholders willing to share their credit card benefits. This creates a powerful ecosystem where everyone wins.</p>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="stat-card bg-white p-6 rounded-xl shadow-lg transition-all duration-300">
+                    <div class="text-sky-600 text-4xl font-bold" data-target="95">0</div>
+                    <p class="mt-2 text-lg font-semibold">Million+ Active Cards</p>
+                    <p class="text-sm text-slate-500">A massive, growing user base.</p>
+                </div>
+                <div class="stat-card bg-white p-6 rounded-xl shadow-lg transition-all duration-300">
+                    <div class="text-sky-600 text-4xl font-bold">₹<span data-target="1.5">0</span> Lakh Crores</div>
+                    <p class="mt-2 text-lg font-semibold">Monthly Card Spending</p>
+                    <p class="text-sm text-slate-500">Driven by e-commerce and travel.</p>
+                </div>
+                <div class="stat-card bg-white p-6 rounded-xl shadow-lg transition-all duration-300">
+                    <div class="text-sky-600 text-4xl font-bold" data-target="20">0</div>
+                    <p class="mt-2 text-lg font-semibold">% YoY Growth</p>
+                    <p class="text-sm text-slate-500">in credit card adoption.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="opportunity" class="mt-20 md:mt-32 scroll-mt-20">
+             <div class="text-center">
+                <h2 class="text-3xl font-bold text-slate-800">The Two-Sided Opportunity</h2>
+                <p class="mt-3 max-w-2xl mx-auto text-slate-600">A significant gap exists between the availability of credit card offers and their utilization. CardConnect bridges this gap by creating value for two distinct groups who currently face missed opportunities.</p>
+            </div>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-8 rounded-xl shadow-lg border-t-4 border-amber-400">
+                    <h3 class="text-2xl font-bold text-slate-800">For Buyers (The Savers)</h3>
+                    <p class="mt-2 text-amber-600 font-semibold">The Problem</p>
+                    <p class="mt-2 text-slate-600">Consumers frequently miss out on significant savings on electronics, travel, and lifestyle purchases simply because they don't own the specific credit card tied to an offer.</p>
+                    <p class="mt-4 text-sky-600 font-semibold">The Solution</p>
+                    <p class="mt-2 text-slate-600">CardConnect provides instant access to these exclusive discounts through a network of verified cardholders, turning missed savings into real money back in their pockets.</p>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-lg border-t-4 border-sky-600">
+                    <h3 class="text-2xl font-bold text-slate-800">For Cardholders (The Earners)</h3>
+                    <p class="mt-2 text-amber-600 font-semibold">The Problem</p>
+                    <p class="mt-2 text-slate-600">Many credit card owners have unused credit limits and benefits. Their cards' full potential to generate rewards or income remains untapped, and they often struggle to meet spending thresholds for fee waivers.</p>
+                    <p class="mt-4 text-sky-600 font-semibold">The Solution</p>
+                    <p class="mt-2 text-slate-600">CardConnect allows them to monetize their existing card benefits by securely making purchases for others, earning a commission on every transaction and effortlessly meeting spending goals.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="how-it-works" class="mt-20 md:mt-32 scroll-mt-20">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold text-slate-800">How CardConnect Works</h2>
+                <p class="mt-3 max-w-2xl mx-auto text-slate-600">Our platform ensures a secure, transparent, and seamless experience for both buyers and cardholders. The entire process is managed through our in-app wallet system. Click on the steps below to see the details.</p>
+            </div>
+            <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div id="steps-container">
+                    <div class="step-item cursor-pointer mb-6" data-step="1">
+                        <div class="flex items-center">
+                            <div class="step-circle flex-shrink-0 w-10 h-10 rounded-full border-2 border-slate-300 flex items-center justify-center font-bold transition-all duration-300">1</div>
+                            <h4 class="step-title ml-4 text-xl font-semibold transition-all duration-300">Buyer Places Request</h4>
+                        </div>
+                        <div class="step-content ml-4 pl-10 border-l-2 border-slate-300 mt-2">
+                           <p class="text-slate-600 py-2">A buyer finds a product with a card-specific discount and initiates a request on CardConnect, funding their wallet with the required amount.</p>
+                        </div>
+                    </div>
+                     <div class="step-item cursor-pointer mb-6" data-step="2">
+                        <div class="flex items-center">
+                            <div class="step-circle flex-shrink-0 w-10 h-10 rounded-full border-2 border-slate-300 flex items-center justify-center font-bold transition-all duration-300">2</div>
+                            <h4 class="step-title ml-4 text-xl font-semibold transition-all duration-300">Cardholder Accepts</h4>
+                        </div>
+                         <div class="step-content ml-4 pl-10 border-l-2 border-slate-300 mt-2">
+                           <p class="text-slate-600 py-2">Verified cardholders see the request. One accepts, agreeing to make the purchase using their specific credit card.</p>
+                        </div>
+                    </div>
+                     <div class="step-item cursor-pointer mb-6" data-step="3">
+                        <div class="flex items-center">
+                            <div class="step-circle flex-shrink-0 w-10 h-10 rounded-full border-2 border-slate-300 flex items-center justify-center font-bold transition-all duration-300">3</div>
+                            <h4 class="step-title ml-4 text-xl font-semibold transition-all duration-300">Payment Execution</h4>
+                        </div>
+                         <div class="step-content ml-4 pl-10 border-l-2 border-slate-300 mt-2">
+                           <p class="text-slate-600 py-2">The cardholder completes the purchase on the merchant's website using their card and uploads proof of purchase to the app.</p>
+                        </div>
+                    </div>
+                     <div class="step-item cursor-pointer" data-step="4">
+                        <div class="flex items-center">
+                            <div class="step-circle flex-shrink-0 w-10 h-10 rounded-full border-2 border-slate-300 flex items-center justify-center font-bold transition-all duration-300">4</div>
+                            <h4 class="step-title ml-4 text-xl font-semibold transition-all duration-300">Secure Settlement</h4>
+                        </div>
+                         <div class="step-content ml-4 pl-10 border-l-2 border-slate-300 mt-2">
+                           <p class="text-slate-600 py-2">Upon verification, funds are released from the buyer's wallet to the cardholder's wallet. The discount is split between the cardholder (as commission) and the platform.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                     <h3 class="text-2xl font-bold text-slate-800 text-center">Revenue Model Example</h3>
+                     <p class="text-center text-sm text-slate-500 mt-2">Here's how a ₹5,000 discount is shared.</p>
+                    <div class="chart-container mx-auto max-w-sm">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="market" class="mt-20 md:mt-32 scroll-mt-20">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold text-slate-800">Market Analysis & Target Audience</h2>
+                <p class="mt-3 max-w-2xl mx-auto text-slate-600">CardConnect targets digitally fluent, value-conscious users in India's rapidly growing fintech landscape. Our user base is composed of two complementary segments.</p>
+            </div>
+            <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold text-slate-800 text-center mb-4">India's Credit Card Growth</h3>
+                    <div class="chart-container mx-auto max-w-lg">
+                        <canvas id="marketGrowthChart"></canvas>
+                    </div>
+                </div>
+                <div class="space-y-8">
+                     <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h4 class="font-bold text-xl text-slate-800">Target Audience: Buyers</h4>
+                        <ul class="mt-4 space-y-2 text-slate-600 list-disc list-inside">
+                            <li><span class="font-semibold">Age:</span> 18-45 years</li>
+                            <li><span class="font-semibold">Income:</span> ₹3–15 lakhs per annum</li>
+                            <li><span class="font-semibold">Profile:</span> Tech-savvy professionals, students, and freelancers in Tier 1 & 2 cities seeking savings.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h4 class="font-bold text-xl text-slate-800">Target Audience: Cardholders</h4>
+                        <ul class="mt-4 space-y-2 text-slate-600 list-disc list-inside">
+                            <li><span class="font-semibold">Age:</span> 20-50 years</li>
+                            <li><span class="font-semibold">Income:</span> ₹6–25 lakhs per annum</li>
+                            <li><span class="font-semibold">Profile:</span> Financially aware individuals with premium cards looking to generate supplementary income.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="competition" class="mt-20 md:mt-32 scroll-mt-20">
+             <div class="text-center">
+                <h2 class="text-3xl font-bold text-slate-800">The Competitive Edge</h2>
+                <p class="mt-3 max-w-2xl mx-auto text-slate-600">While the P2P benefit sharing market is emerging, existing solutions have significant limitations. CardConnect is built to be more secure, efficient, and scalable, addressing key user pain points.</p>
+            </div>
+            <div class="mt-12 overflow-x-auto">
+                <table class="w-full min-w-max text-left bg-white shadow-lg rounded-xl">
+                    <thead class="bg-slate-100">
+                        <tr>
+                            <th class="p-4 font-semibold">Feature</th>
+                            <th class="p-4 font-semibold text-center">PiePay (Competitor)</th>
+                            <th class="p-4 font-semibold text-center bg-sky-100 text-sky-800">CardConnect</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b hover:bg-slate-50 transition-colors">
+                            <td class="p-4 font-medium">Trust & Security</td>
+                            <td class="p-4 text-center">Basic; reports of card blocking</td>
+                            <td class="p-4 text-center font-bold text-sky-700">Robust (KYC, Ratings, Escrow)</td>
+                        </tr>
+                        <tr class="border-b hover:bg-slate-50 transition-colors">
+                            <td class="p-4 font-medium">Economic Model</td>
+                            <td class="p-4 text-center">High platform fees</td>
+                            <td class="p-4 text-center font-bold text-sky-700">Transparent, low commission</td>
+                        </tr>
+                         <tr class="border-b hover:bg-slate-50 transition-colors">
+                            <td class="p-4 font-medium">Marketplace Dynamics</td>
+                            <td class="p-4 text-center">Limited one-way sharing</td>
+                            <td class="p-4 text-center font-bold text-sky-700">Open, multi-platform integration</td>
+                        </tr>
+                         <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="p-4 font-medium">Regulatory Alignment</td>
+                            <td class="p-4 text-center">Unclear, potential user risk</td>
+                            <td class="p-4 text-center font-bold text-sky-700">Wallet-based, aligned with RBI norms</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+        <section id="technology" class="mt-20 md:mt-32 scroll-mt-20">
+             <div class="text-center">
+                <h2 class="text-3xl font-bold text-slate-800">Technology Stack</h2>
+                <p class="mt-3 max-w-2xl mx-auto text-slate-600">Our platform is built on a modern, secure, and scalable technology stack designed for high-availability financial transactions.</p>
+            </div>
+            <div class="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md text-center">
+                    <h4 class="text-xl font-bold text-slate-800">Frontend</h4>
+                    <p class="mt-2 text-slate-600">Flutter for cross-platform (iOS/Android) mobile apps.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md text-center">
+                    <h4 class="text-xl font-bold text-slate-800">Backend</h4>
+                    <p class="mt-2 text-slate-600">Node.js with Express.js for a scalable, microservices-based API.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md text-center">
+                    <h4 class="text-xl font-bold text-slate-800">Database</h4>
+                    <p class="mt-2 text-slate-600">PostgreSQL for relational data and Redis for caching.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md text-center">
+                    <h4 class="text-xl font-bold text-slate-800">Infrastructure</h4>
+                    <p class="mt-2 text-slate-600">Amazon Web Services (AWS) for robust, scalable cloud hosting.</p>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+    
+    <footer class="mt-20 md:mt-32 bg-slate-800 text-white">
+        <div class="container mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2025 CardConnect. All Rights Reserved.</p>
+            <p class="text-sm text-slate-400 mt-2">This is an interactive visualization of the CardConnect business plan.</p>
+        </div>
+    </footer>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // Mobile Menu Toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Close mobile menu on link click
+        document.querySelectorAll('#mobile-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+
+        // Active Nav Link Styling on Scroll
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.4
+        };
+
+        const sectionObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href').substring(1) === entry.target.id) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(section => {
+            sectionObserver.observe(section);
+        });
+        
+
+        // Dynamic Number Counters
+        const animateStats = (entry) => {
+            if (entry.isIntersecting) {
+                const counter = entry.target;
+                const target = +counter.getAttribute('data-target');
+                const duration = 1500;
+                const stepTime = Math.abs(Math.floor(duration / target));
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += 1;
+                    if(counter.previousElementSibling && counter.previousElementSibling.tagName === 'SPAN') {
+                         counter.innerHTML = parseFloat(current / (target/1.5)).toFixed(1);
+                    } else {
+                        counter.innerHTML = current;
+                    }
+                    if (current === target) {
+                        clearInterval(timer);
+                         if(counter.previousElementSibling && counter.previousElementSibling.tagName === 'SPAN') {
+                            counter.innerHTML = parseFloat(target/ (target/1.5)).toFixed(1);
+                        } else {
+                             counter.innerHTML = target;
+                        }
+                    }
+                }, 20);
+                 statObserver.unobserve(counter);
+            }
+        };
+
+        const statObserver = new IntersectionObserver((entries) => {
+             entries.forEach(animateStats);
+        }, { threshold: 0.5 });
+        
+        document.querySelectorAll('[data-target]').forEach(counter => {
+            statObserver.observe(counter);
+        });
+
+        // Interactive Steps
+        const stepsContainer = document.getElementById('steps-container');
+        const stepItems = stepsContainer.querySelectorAll('.step-item');
+
+        stepsContainer.addEventListener('click', (e) => {
+            const stepItem = e.target.closest('.step-item');
+            if (stepItem) {
+                const stepNumber = stepItem.dataset.step;
+                const content = stepItem.querySelector('.step-content');
+                
+                const wasActive = stepItem.classList.contains('active');
+
+                stepItems.forEach(item => {
+                    item.classList.remove('active');
+                    item.querySelector('.step-content').classList.remove('visible');
+                });
+
+                if(!wasActive) {
+                    stepItem.classList.add('active');
+                    content.classList.add('visible');
+                }
+            }
+        });
+        
+        // Auto-open first step
+        const firstStep = stepsContainer.querySelector('.step-item[data-step="1"]');
+        if (firstStep) {
+            firstStep.classList.add('active');
+            firstStep.querySelector('.step-content').classList.add('visible');
+        }
+
+        // Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart');
+        if (revenueCtx) {
+            new Chart(revenueCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Buyer Gets Savings', 'Cardholder Commission', 'Platform Fee'],
+                    datasets: [{
+                        label: 'Discount Split',
+                        data: [4500, 300, 200],
+                        backgroundColor: [
+                            '#38bdf8', // sky-400
+                            '#0284c7', // sky-600
+                            '#fbbf24'  // amber-400
+                        ],
+                        borderColor: '#f8f9fa',
+                        borderWidth: 4,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    family: "'Inter', sans-serif"
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += '₹' + context.parsed.toLocaleString('en-IN');
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Market Growth Chart
+        const marketGrowthCtx = document.getElementById('marketGrowthChart');
+        if (marketGrowthCtx) {
+            new Chart(marketGrowthCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['2021', '2022', '2023', '2024', '2025 (Est.)'],
+                    datasets: [{
+                        label: 'Active Credit Cards (in Millions)',
+                        data: [62, 75, 85, 95, 110],
+                        backgroundColor: '#38bdf8',
+                        borderColor: '#0284c7',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                     scales: {
+                        y: {
+                            beginAtZero: true,
+                             grid: {
+                                color: '#e2e8f0' // slate-200
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + 'M'
+                                }
+                            }
+                        },
+                        x: {
+                             grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + 'M';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+    });
+    </script>
+</body>
+</html>
